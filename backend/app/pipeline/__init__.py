@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from app.config import get_settings
 from app.document_review.base import DocumentReviewer
 from app.pipeline.base import DuplicateChecker, Pipeline, PipelineContext, PipelineStep
 from app.pipeline.classification import (
@@ -28,10 +29,21 @@ def build_default_pipeline(
     is_duplicate_checker: DuplicateChecker | None = None,
 ) -> Pipeline:
     """Classify → extract → LLM review/merge → validate → suggest GL."""
+    if get_settings().ai_provider == "gemini":
+        from app.pipeline.gemini_extraction import GeminiExtractionStep
+        from app.providers.gemini import GeminiClient
+        from app.providers.gemini_documents import GeminiDocumentReviewer, GeminiGlCategorizer
+
+        client = GeminiClient()
+        initial_steps = [GeminiExtractionStep(client)]
+        document_reviewer = document_reviewer or GeminiDocumentReviewer(client)
+        categorization = GlCategorizationStep(categorizer=GeminiGlCategorizer(client))
+    else:
+        initial_steps = [ClassificationStep(), ExtractionStep()]
+        categorization = GlCategorizationStep()
     return Pipeline(
         [
-            ClassificationStep(),
-            ExtractionStep(),
+            *initial_steps,
             DocumentReviewStep(reviewer=document_reviewer, content_type=content_type),
             ValidationStep(
                 expected_customer_name=expected_customer_name,
@@ -39,7 +51,7 @@ def build_default_pipeline(
                 min_confidence=min_confidence,
                 is_duplicate_checker=is_duplicate_checker,
             ),
-            GlCategorizationStep(),
+            categorization,
         ]
     )
 

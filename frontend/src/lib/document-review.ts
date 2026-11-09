@@ -25,7 +25,7 @@ export function summarizeDocumentReview(review: DocumentReviewArtifact): Documen
       kind: 'supplemented',
       title: `LLM filled ${review.fallback_fields.length} missing ${review.fallback_fields.length === 1 ? 'field' : 'fields'}`,
       description:
-        'Document Intelligence stays primary. The highlighted gaps use the independent LLM extraction.',
+        'The first extraction stays primary. Highlighted gaps use the second reading.',
     }
   }
   if (differentFields > 0) {
@@ -33,15 +33,15 @@ export function summarizeDocumentReview(review: DocumentReviewArtifact): Documen
       kind: 'differences',
       title:
         conflicts > 0
-          ? `Models disagree on ${conflicts} ${conflicts === 1 ? 'field' : 'fields'}`
+          ? `Readings disagree on ${conflicts} ${conflicts === 1 ? 'field' : 'fields'}`
           : `LLM found ${differentFields} differences`,
       description:
-        'Document Intelligence remains selected for conflicts. Review the highlighted evidence below.',
+        'The first extraction remains selected for conflicts. Review the evidence below.',
     }
   }
   return {
     kind: 'agreement',
     title: 'LLM cross-check agrees',
-    description: `Azure OpenAI matched all ${reviewedFields} compared fields.`,
+    description: `The second reading matched all ${reviewedFields} compared fields. Agreement does not prove accuracy.`,
   }
 }

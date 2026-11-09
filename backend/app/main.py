@@ -17,6 +17,8 @@ from app.documents.routes import router as document_router
 from app.providers.azure_openai import build_azure_openai_client
 from app.providers.azure_openai_correction_email import AzureOpenAICorrectionEmailDrafter
 from app.providers.azure_openai_document_review import AzureOpenAIDocumentReviewer
+from app.providers.gemini import GeminiClient
+from app.providers.gemini_documents import GeminiCorrectionEmailDrafter, GeminiDocumentReviewer
 
 
 class AccessPasswordMiddleware(BaseHTTPMiddleware):
@@ -56,20 +58,23 @@ def create_app() -> FastAPI:
     DocumentRecord.metadata.create_all(engine)
 
     settings = get_settings()
-    openai_client = build_azure_openai_client(settings)
 
     app = FastAPI(title="Invoice Review API", version="0.1.0")
     app.state.config = config
     app.state.engine = engine
     app.state.session_factory = session_factory
-    app.state.document_reviewer = AzureOpenAIDocumentReviewer(
-        client=openai_client,
-        deployment_name=settings.azure_openai_deployment,
-    )
-    app.state.correction_email_drafter = AzureOpenAICorrectionEmailDrafter(
-        client=openai_client,
-        deployment_name=settings.azure_openai_deployment,
-    )
+    if settings.ai_provider == "gemini":
+        gemini_client = GeminiClient(settings)
+        app.state.document_reviewer = GeminiDocumentReviewer(gemini_client)
+        app.state.correction_email_drafter = GeminiCorrectionEmailDrafter(gemini_client)
+    else:
+        openai_client = build_azure_openai_client(settings)
+        app.state.document_reviewer = AzureOpenAIDocumentReviewer(
+            client=openai_client, deployment_name=settings.azure_openai_deployment,
+        )
+        app.state.correction_email_drafter = AzureOpenAICorrectionEmailDrafter(
+            client=openai_client, deployment_name=settings.azure_openai_deployment,
+        )
     app.add_middleware(AccessPasswordMiddleware)
     app.add_middleware(
         CORSMiddleware,

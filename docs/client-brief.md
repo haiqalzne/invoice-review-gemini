@@ -1,5 +1,7 @@
 # Client brief
 
+> **Local Gemini adaptation — 9 November 2026:** This workspace now supports `AI_PROVIDER=gemini` (the default). One Gemini request classifies and extracts into provider-independent `ReviewData`; a second source reading fills missing fields and exposes differences; a third request suggests a catalog account. Both readings use the same model, not independent Azure services. Python validation, human decisions and SQLite remain unchanged. Field provenance records `gemini`, `gemini_review`, or `human`; unavailable field confidence stays empty. `DocumentReview.primary_provider` and `review_provider` select truthful labels for saved records. The legacy comparison key `document_intelligence_value` is retained for record compatibility and represents the first reading; its displayed label follows provider metadata. The sections below describe the preserved original Azure architecture.
+
 ## The company
 
 Northstar Facilities B.V. is a fictional facilities-management company based in Amsterdam. It buys cleaning, maintenance, electrical, plumbing, and equipment services from suppliers across the European Union.

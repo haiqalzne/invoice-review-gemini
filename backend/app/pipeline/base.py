@@ -25,7 +25,7 @@ class PipelineContext(BaseModel):
     document_path: Path
     content_type: str | None = None
     classification: DocumentClassification | None = None
-    extraction: InvoiceExtraction | ReceiptExtraction | None = None
+    extraction: InvoiceExtraction | ReceiptExtraction | ReviewData | None = None
     review_data: ReviewData | None = None
     document_review: DocumentReview | None = None
     issues: list[ValidationIssue] | None = None

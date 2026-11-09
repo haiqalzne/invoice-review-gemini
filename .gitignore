@@ -1,6 +1,8 @@
 .DS_Store
 /youtube-board.json
 .env
+.env.*
+!.env.example
 .venv/
 __pycache__/
 .pytest_cache/
@@ -10,3 +12,5 @@ backend/data/
 samples/sample-invoice.pdf
 frontend/node_modules/
 frontend/dist/
+
+frontend/.dependency-backup/

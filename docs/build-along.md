@@ -1,6 +1,87 @@
 # Build-along guide
 
-The complete guided build lives at <https://learn.datalumina.com/docs/invoice-review>. This local guide records the first checkpoint represented by the `main` branch.
+## Gemini learning path
+
+Use the [README quick start](../README.md#quick-start) to install and run this fork. The `gemini` branch contains working application code. The original Azure tutorial sequence is preserved later in this document as historical reference; its provider scripts require Azure credentials and are not the Gemini setup path.
+
+### Pass 1 — see the complete flow
+
+1. Start the backend and frontend, open `http://localhost:5173`, and upload the fictional `02-nl-happy-compact.pdf` from `samples/generated/`.
+2. Check the source preview. Processing sends the file to Gemini and consumes up to three requests.
+3. Inspect supplier, invoice number, totals, validation issues and the suggested general-ledger (GL) account. GL means the bookkeeping category; the catalog is ordinary application data.
+4. Before approving, change invoice total to `999.00` and save. Expect `invoice_total_mismatch` and approval to be blocked. Restore `290.40`; expect the issue to clear and the value to be marked as a human correction.
+5. Approve the review, open History and reload the page. The decision should remain stored. A decided document cannot be edited.
+
+Expected arithmetic for this sample: subtotal `240.00` + tax `50.40` = total `290.40`, all EUR. Cleaning services (`6100`) is the expected category suggestion, but model output still needs review. To repeat a clean run of the identical invoice, delete only your disposable example through History or select a different sample; duplicate detection is intentional.
+
+**Checkpoint:** describe where AI contributes, which rules Python enforces, which decision a human makes and what survives a page reload.
+
+### Pass 2 — follow one record through the code
+
+| Question | Inspect |
+| --- | --- |
+| What does the user send? | `frontend/src/lib/api.ts` and `backend/app/documents/routes.py` |
+| Where are secrets and provider choices read? | `backend/app/config.py` |
+| What shape must extracted data have? | `backend/app/documents/schemas.py` and `backend/app/providers/gemini_documents.py` |
+| What order does processing follow? | `backend/app/pipeline/__init__.py` and `base.py` |
+| Where does the external request happen? | `backend/app/providers/gemini.py` |
+| How are differences and missing fields handled? | `backend/app/document_review/reconciliation.py` |
+| Who checks VAT and arithmetic? | `backend/app/documents/validation.py` |
+| Where is the decision saved? | `backend/app/documents/service.py`, `repository.py` and `models.py` |
+| How does it reach the screen? | `frontend/src/components/DocumentReview.tsx` |
+
+The API uses JSON (structured data), Python validates it with Pydantic schemas, and SQLite retains local records. `Decimal` represents amounts without ordinary binary floating-point rounding. `field_sources` distinguishes the first Gemini reading, a fallback from its second reading and a human edit.
+
+The legacy comparison property `document_intelligence_value` means the primary reading for stored-record compatibility. Provider metadata determines the visible label. Neither two agreeing readings nor a model's self-rated category confidence proves correctness.
+
+**Checkpoint:** trace `invoice_total` from source → Gemini output → `ReviewData` → reconciliation → Python check → SQLite → screen. Explain why changing the AI provider does not change the arithmetic rule.
+
+### Pass 3 — predict, change and debug
+
+Use these cases one at a time; each new processed document consumes quota.
+
+| Exercise | Expected learning |
+| --- | --- |
+| `05-nl-missing-vendor-vat.pdf` | A required value can be missing even when JSON is valid. |
+| `08-en-total-mismatch.pdf` | Extract the wrong source total faithfully; flag it instead of silently repairing it. |
+| Process the same invoice twice | The service/repository supplies duplicate evidence that a standalone model cannot know. |
+| Correct a field and rerun checks | A human edit changes provenance and revalidates without another model call. |
+| Select a different valid GL account | The model suggests; the catalog constrains choices; the human decides. |
+
+For errors that the supplier can fix, generate an optional correction draft and inspect its wording. This adds one Gemini request. Copying a draft does not send it; the application contains no email-sending integration.
+
+**Checkpoint:** explain a failure using evidence from the source, normalized data and rule code. Distinguish extraction mistakes from policy failures and provider outages.
+
+### Pass 4 — make and explain one independent change
+
+Choose one small change, such as clarifying an issue message or adding a well-specified local policy rule. Write an acceptance example first. Identify the responsible module, implement the change, run the documented checks, then exercise both the changed case and an unaffected case. Keep the fixed GL catalog and the model prompt consistent if you change categories.
+
+Do not treat a successful demonstration as mastery. The goal is being able to explain, modify, verify and troubleshoot the system independently.
+
+## Configuration, usage and troubleshooting
+
+- **Missing key:** set your own `GEMINI_API_KEY` in `backend/.env`. Never paste it into the frontend, README, logs or an issue.
+- **403/access blocked:** inspect the key's project and any free-tier verification requirement in AI Studio.
+- **429/rate limit:** wait and retry manually after checking project limits. The app has no automatic retries or billing upgrades.
+- **Model unavailable:** check current model availability and free-tier eligibility, then update `GEMINI_MODEL` deliberately.
+- **Wrong local URL:** use `http://localhost:5173` for the UI and port `8000` for the API. A different origin may require updating `ALLOWED_ORIGIN`.
+- **Port in use:** close the earlier instance before starting another; do not run two backends against the same learning database.
+- **Cloud-only project files:** if imports/builds hang in a synced folder, ensure dependencies are downloaded locally. Restore only the existing locked versions; do not mistake a cloud-only Git file for damaged history.
+- **Azure-specific examples:** the older provider checks and corpus evaluators below still use Azure. Use the README's Gemini app flow or `playground/run_pipeline.py` for this fork.
+
+Normal processing uses three requests (combined classification/extraction, fresh source reading, GL suggestion); the optional email draft adds one. Output is capped at 8,192 tokens per request and requests time out after 90 seconds. Failed calls can still consume quota. Current pricing and quotas belong to Google, not this repository.
+
+## Verification evidence and limits
+
+Verified on 9 November 2026: backend Ruff; frontend TypeScript, ESLint and production build; one live fictional PDF extracted to EUR `290.40` and GL `6100`; local corrections; invalid-total approval rejection (HTTP 409); one unsent Gemini correction draft; and browser approval/history. Offline checks covered missing keys, safe quota errors, malformed structured output, receipt mapping/arithmetic, unavailable confidence, conflict preservation and fallback provenance.
+
+The browser automation file-chooser check timed out; direct multipart upload and the saved-review UI were verified. Confirm the native file picker manually on your machine. The complete multilingual corpus has not been benchmarked against Gemini. No independent learner assessment is implied by these setup checks.
+
+Publication preparation on 10 November 2026: added the public quick start, diagram, screenshot and learning exercises; adapted `playground/run_pipeline.py` to Gemini ReviewData and explicit document MIME types; and removed three legacy playground lint findings. Backend/playground Ruff and an offline command-line check passed. The offline check verifies the default fixture, JSON output and full-review MIME configuration without calling a model. No key, runtime database, uploaded user file, virtual environment or dependency directory is distributed. See the repository history for the changes.
+
+## Historical Azure build sequence
+
+The sections below preserve upstream's original build stages. Their starter descriptions and unchecked boxes describe that tutorial's progression, not the state of this completed Gemini fork. For current installation and startup, use the README above.
 
 ## Starter outcome
 
@@ -22,7 +103,7 @@ pnpm install --frozen-lockfile
 cd ..
 cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env
-./scripts/dev.sh --check
+# Historical starter checkpoint; current dev.sh has no --check mode.
 ./scripts/dev.sh
 ```
 
@@ -45,7 +126,7 @@ cp frontend/.env.example frontend/.env
 - [ ] Locked backend and frontend installs succeed.
 - [ ] Backend lint passes.
 - [ ] Frontend type-check, lint, and production build pass.
-- [ ] `./scripts/dev.sh --check` reports that Invoice Review is ready to start.
+- [ ] `# Historical starter checkpoint; current dev.sh has no --check mode.` reports that Invoice Review is ready to start.
 - [ ] The health endpoint and starter screen load locally.
 
 Continue with the [online tutorial](https://learn.datalumina.com/docs/invoice-review).

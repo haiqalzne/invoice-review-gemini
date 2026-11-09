@@ -237,7 +237,7 @@ export function DocumentReview({ document, accounts, accountsLoading, onRetryAcc
                 <div key={item.key} className="border-b border-zinc-100 p-4 last:border-b-0 sm:border-r sm:[&:nth-last-child(-n+2)]:border-b-0 sm:[&:nth-child(2n)]:border-r-0 lg:[&:nth-last-child(-n+4)]:border-b-0 lg:[&:nth-child(2n)]:border-r lg:[&:nth-child(4n)]:border-r-0">
                   <dt className="text-xs font-medium text-zinc-500">{item.label}</dt>
                   <dd className="mt-1 break-words text-sm font-medium text-zinc-900">{item.value}</dd>
-                  {document.review_data?.field_sources?.[item.key] === 'llm_fallback' && <Badge variant="secondary" className="mt-2">LLM fallback</Badge>}
+                  {['llm_fallback', 'gemini_review'].includes(document.review_data?.field_sources?.[item.key] ?? '') && <Badge variant="secondary" className="mt-2">LLM fallback</Badge>}
                   {document.review_data?.field_sources?.[item.key] === 'human' && <Badge variant="secondary" className="mt-2">Human correction</Badge>}
                 </div>
               ))}
@@ -284,9 +284,9 @@ export function DocumentReview({ document, accounts, accountsLoading, onRetryAcc
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <h3 className="text-base font-semibold text-zinc-900">General ledger account</h3>
-                  <p className="mt-1 text-sm text-zinc-500">Azure OpenAI suggests an account. You can override it.</p>
+                  <p className="mt-1 text-sm text-zinc-500">AI suggests an account. You can override it.</p>
                 </div>
-                {document.accounting_coding?.suggestion && <Badge variant="secondary">{Math.round(document.accounting_coding.suggestion.confidence * 100)}% confidence</Badge>}
+                {document.accounting_coding?.suggestion && <Badge variant="secondary">{Math.round(document.accounting_coding.suggestion.confidence * 100)}% model estimate</Badge>}
               </div>
 
               {document.accounting_coding?.suggestion && (
@@ -323,7 +323,7 @@ export function DocumentReview({ document, accounts, accountsLoading, onRetryAcc
         {draft && (
           <section className="border-t border-zinc-100 pt-7">
             <h3 className="text-base font-semibold text-zinc-900">Review extracted fields</h3>
-            <p className="mt-1 text-sm text-zinc-500">Correct anything that Azure read incorrectly, then rerun the checks.</p>
+            <p className="mt-1 text-sm text-zinc-500">Correct anything that AI read incorrectly, then rerun the checks.</p>
             <form onSubmit={(event) => { event.preventDefault(); void save() }} className="mt-6 space-y-7">
               {(isReceipt ? receiptFieldGroups : fieldGroups).map((group) => (
                 <fieldset key={group.title} disabled={locked || busy !== null}>

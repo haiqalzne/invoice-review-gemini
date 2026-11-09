@@ -41,6 +41,8 @@ class FieldComparison(BaseModel):
 
 
 class DocumentReview(BaseModel):
+    primary_provider: Literal["document_intelligence", "gemini"] = "document_intelligence"
+    review_provider: Literal["azure_openai", "gemini"] = "azure_openai"
     extraction: LlmDocumentExtraction | None = None
     comparisons: list[FieldComparison] = Field(default_factory=list)
     fallback_fields: list[FieldComparison] = Field(default_factory=list)

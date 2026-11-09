@@ -1,5 +1,19 @@
 # Pricing
 
+## Gemini learning mode
+
+The default model is `gemini-3.5-flash-lite`. Use a Google project on Free tier for the free learning route. No shared key is provided. Eligibility, available models and quotas vary and can change; inspect [current pricing](https://ai.google.dev/gemini-api/docs/pricing) and [your own project limits](https://aistudio.google.com/rate-limit). The application cannot determine or enforce your Google project's billing tier.
+
+A normal upload uses three requests: classify/extract, fresh source reading, GL suggestion. A correction-email draft adds one request. The adapter caps output at 8,192 tokens/request, times out after 90 seconds and performs no automatic retries or provider fallbacks. A failed stage can still consume quota. Local edits, checks, approval/rejection and history do not call Gemini.
+
+Only fictional learning documents should be used because free-tier inputs/outputs may be used to improve Google products. Keep your key in the ignored backend environment file. Do not enable billing merely to bypass a rate limit during a learning exercise.
+
+## Azure reference
+
+The preserved Azure pipeline makes three model calls plus a separate Document Intelligence extraction per ordinary upload; an optional correction draft adds another model call. The older two-call calculations below do not describe that complete workflow. Their token envelopes are estimates, not enforced spending limits. Recheck current service prices, quotas and resources before running an Azure example. No Azure service is needed for Gemini mode.
+
+## Historical upstream estimate
+
 Pricing checked on 2026-07-19 for the project's Document Intelligence resource and the `gpt-5.6-terra` Global Standard deployment. Azure prices are estimates: the final amount can vary by agreement, purchase date, tax, and exchange rate. Microsoft publishes current service prices through the [Azure Retail Prices API](https://learn.microsoft.com/rest/api/cost-management/retail-prices/azure-retail-prices).
 
 ## Cost of this local setup

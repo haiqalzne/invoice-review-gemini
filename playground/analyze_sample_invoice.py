@@ -21,7 +21,6 @@ def main() -> None:
     service = DocumentIntelligenceService()
     result = service.analyze_invoice(SAMPLE_INVOICE)
     print(json.dumps(service.to_dict(result), indent=2, default=str))
-    result.content
 
 
 if __name__ == "__main__":

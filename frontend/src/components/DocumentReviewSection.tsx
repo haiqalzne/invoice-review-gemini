@@ -11,6 +11,7 @@ function shown(value: string | null): string {
 }
 
 export function DocumentReviewSection({ review }: DocumentReviewSectionProps) {
+  const isGemini = review.primary_provider === 'gemini'
   const summary = summarizeDocumentReview(review)
   const differences = review.comparisons.filter(
     (comparison) => comparison.status !== 'match' && comparison.status !== 'missing_in_both',
@@ -27,10 +28,10 @@ export function DocumentReviewSection({ review }: DocumentReviewSectionProps) {
     <section className="border-t border-zinc-100 pt-7">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="text-base font-semibold text-zinc-900">Independent LLM cross-check</h3>
-          <p className="mt-1 text-sm text-zinc-500">Azure OpenAI reads the original document separately and compares its extraction with Document Intelligence.</p>
+          <h3 className="text-base font-semibold text-zinc-900">AI cross-check</h3>
+          <p className="mt-1 text-sm text-zinc-500">{isGemini ? 'Gemini reads the source twice. Both readings use the same model and may share mistakes. Field confidence is unavailable; verify important values against the preview.' : 'Azure OpenAI reads the original document separately and compares it with Document Intelligence.'}</p>
         </div>
-        <Badge variant="secondary">Document Intelligence primary</Badge>
+        <Badge variant="secondary">{isGemini ? 'Gemini primary' : 'Document Intelligence primary'}</Badge>
       </div>
 
       <div className={`mt-4 rounded-lg border p-4 ${messageStyle}`}>
@@ -43,8 +44,8 @@ export function DocumentReviewSection({ review }: DocumentReviewSectionProps) {
         <div className="mt-4 overflow-x-auto rounded-lg border border-zinc-200">
           <div className="grid min-w-[40rem] grid-cols-[minmax(8rem,0.8fr)_minmax(0,1fr)_minmax(0,1fr)] gap-3 border-b border-zinc-200 bg-zinc-50 px-4 py-2 text-xs font-medium text-zinc-500">
             <span>Field</span>
-            <span>Document Intelligence</span>
-            <span>Azure OpenAI</span>
+            <span>{isGemini ? 'Gemini first reading' : 'Document Intelligence'}</span>
+            <span>{isGemini ? 'Gemini second reading' : 'Azure OpenAI'}</span>
           </div>
           {differences.map((comparison) => (
             <div key={comparison.field} className="grid min-w-[40rem] grid-cols-[minmax(8rem,0.8fr)_minmax(0,1fr)_minmax(0,1fr)] gap-3 border-b border-zinc-100 px-4 py-3 text-sm last:border-b-0">

@@ -18,7 +18,7 @@ DocumentStatus = Literal[
 IssueSeverity = Literal["error", "warning"]
 DocumentType = Literal["invoice", "receipt"]
 ExpenseCategory = Literal["fuel", "meals", "travel", "supplies", "other"]
-FieldSource = Literal["document_intelligence", "llm_fallback", "human"]
+FieldSource = Literal["document_intelligence", "llm_fallback", "gemini", "gemini_review", "human"]
 
 
 class ReviewLineItem(BaseModel):

@@ -9,7 +9,7 @@ export type DocumentStatus =
 export type IssueSeverity = 'error' | 'warning'
 export type DocumentType = 'invoice' | 'receipt'
 export type ExpenseCategory = 'fuel' | 'meals' | 'travel' | 'supplies' | 'other'
-export type FieldSource = 'document_intelligence' | 'llm_fallback' | 'human'
+export type FieldSource = 'document_intelligence' | 'llm_fallback' | 'gemini' | 'gemini_review' | 'human'
 
 export interface ReviewLineItem {
   description: string | null
@@ -101,6 +101,8 @@ export interface FieldComparison {
 }
 
 export interface DocumentReviewArtifact {
+  primary_provider?: 'document_intelligence' | 'gemini'
+  review_provider?: 'azure_openai' | 'gemini'
   extraction: LlmDocumentExtraction | null
   comparisons: FieldComparison[]
   fallback_fields: FieldComparison[]

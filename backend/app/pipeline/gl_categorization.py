@@ -120,7 +120,7 @@ class GlCategorizationStep:
                 "GlCategorizationStep requires ctx.review_data or ctx.extraction."
             )
 
-        logger.info("Suggesting Northstar GL account with Azure OpenAI")
+        logger.info("Suggesting Northstar GL account with the configured AI provider")
         suggestion = self._categorizer.run(source)
         logger.info(
             "Suggested GL account %s (confidence=%.2f)",

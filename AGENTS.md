@@ -1,5 +1,7 @@
 # Invoice Review agent instructions
 
+> This fork defaults to Gemini. The current README and the Gemini section of `docs/build-along.md` describe its working setup. Azure-specific stack descriptions below remain the upstream reference. Preserve provider boundaries, truthful provenance and original attribution when extending the fork.
+
 Read `docs/client-brief.md`, `docs/architecture.md`, and `docs/build-along.md` before changing the project.
 
 ## Stack

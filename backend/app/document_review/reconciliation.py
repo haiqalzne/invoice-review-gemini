@@ -4,7 +4,7 @@ from datetime import date
 from decimal import Decimal, InvalidOperation
 
 from app.document_review.schemas import DocumentReview, FieldComparison, LlmDocumentExtraction
-from app.documents.schemas import ReviewData
+from app.documents.schemas import FieldSource, ReviewData
 
 FIELDS = (
     ("vendor_name", "Supplier", "text"),
@@ -113,6 +113,9 @@ def _fallback_value(field: str, value: str) -> object | None:
 def merge_document_extractions(
     primary: ReviewData,
     extraction: LlmDocumentExtraction,
+    *,
+    primary_source: FieldSource = "document_intelligence",
+    fallback_source: FieldSource = "llm_fallback",
 ) -> tuple[ReviewData, DocumentReview]:
     review = reconcile_document_extractions(primary, extraction)
     merged_values = primary.model_dump()
@@ -122,7 +125,7 @@ def merge_document_extractions(
     for field, _label, _normalizer_name in FIELDS:
         primary_value = getattr(primary, field)
         if _shown(primary_value) is not None:
-            field_sources.setdefault(field, "document_intelligence")
+            field_sources.setdefault(field, primary_source)
             continue
 
         llm_value = _shown(getattr(extraction, field))
@@ -132,7 +135,7 @@ def merge_document_extractions(
         if parsed_value is None:
             continue
         merged_values[field] = parsed_value
-        field_sources[field] = "llm_fallback"
+        field_sources[field] = fallback_source
         fallback_fields.append(
             next(item for item in review.comparisons if item.field == field)
         )

@@ -6,12 +6,12 @@ Run from this folder:
 
 Pass a custom prompt:
 
-    uv run --project ../backend --locked --no-sync python create_openai_response.py "Summarize this in one sentence."
+    uv run --project ../backend --locked --no-sync python create_openai_response.py \
+        "Summarize this in one sentence."
 """
 
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
 
@@ -24,7 +24,6 @@ def main() -> None:
     prompt = "What is the capital of France?"
     service = AzureOpenAIService()
     response = service.create_response(prompt)
-    # print(json.dumps(response.model_dump(), indent=2, default=str))
     print(response.output[0].content[0].text)
 
 

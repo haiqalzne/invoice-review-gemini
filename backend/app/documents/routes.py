@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.accounting.schemas import AccountingSelectionRequest
 from app.config import AppConfig
+from app.correction_email.base import CorrectionEmailDraftingError
 from app.correction_email.eligibility import supplier_fixable_issues
 from app.correction_email.schemas import CorrectionEmailDraft
 from app.documents.models import DocumentRecord
@@ -182,6 +183,8 @@ def draft_correction_email(
     service = build_service(request, repository)
     try:
         return service.draft_correction_email(document_id)
+    except CorrectionEmailDraftingError as error:
+        raise HTTPException(status_code=502, detail=str(error)) from error
     except DocumentNotFoundError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     except DocumentReviewConflictError as error:
@@ -209,7 +212,7 @@ def upload_document(
     if len(payload) > config.max_upload_bytes:
         raise HTTPException(
             status_code=413,
-            detail="The Azure F0 tutorial limit is 4 MB per document.",
+            detail="The local learning limit is 4 MB per document.",
         )
 
     original_filename = Path(file.filename or "document").name[:255]

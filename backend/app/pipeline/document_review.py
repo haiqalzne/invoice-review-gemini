@@ -7,6 +7,7 @@ from app.document_review.base import DocumentReviewer, DocumentReviewError
 from app.document_review.reconciliation import merge_document_extractions
 from app.document_review.schemas import DocumentReview
 from app.documents.projection import project_extraction
+from app.documents.schemas import ReviewData
 
 if TYPE_CHECKING:
     from app.pipeline.base import PipelineContext
@@ -36,15 +37,20 @@ class DocumentReviewStep:
         if ctx.extraction is None:
             raise ValueError("DocumentReviewStep requires ctx.extraction from ExtractionStep.")
 
-        review_data = project_extraction(ctx.extraction)
+        is_gemini = isinstance(ctx.extraction, ReviewData)
+        review_data = ctx.extraction if is_gemini else project_extraction(ctx.extraction)
+        provider_info = (
+            {"primary_provider": "gemini", "review_provider": "gemini"} if is_gemini else {}
+        )
         content_type = self._content_type or ctx.content_type
         if self._reviewer is None or content_type is None:
-            logger.info("Skipping LLM document review; using Document Intelligence projection only")
+            logger.info("Skipping AI cross-check; using primary extraction only")
             return ctx.model_copy(
                 update={
                     "review_data": review_data,
                     "document_review": DocumentReview(
-                        error_message="Independent LLM review was not configured."
+                        **provider_info,
+                        error_message="AI cross-check was not configured."
                     ),
                 }
             )
@@ -56,7 +62,7 @@ class DocumentReviewStep:
             return ctx.model_copy(
                 update={
                     "review_data": review_data,
-                    "document_review": DocumentReview(error_message=str(error)),
+                    "document_review": DocumentReview(**provider_info, error_message=str(error)),
                 }
             )
 
@@ -65,9 +71,14 @@ class DocumentReviewStep:
                 "The uploaded file is not a supported invoice or receipt."
             )
 
-        merged, document_review = merge_document_extractions(review_data, llm_extraction)
+        merged, document_review = merge_document_extractions(
+            review_data, llm_extraction,
+            primary_source="gemini" if is_gemini else "document_intelligence",
+            fallback_source="gemini_review" if is_gemini else "llm_fallback",
+        )
+        document_review = document_review.model_copy(update=provider_info)
         logger.info(
-            "Merged DI and LLM extractions (%d fallback field(s))",
+            "Merged primary and review extractions (%d fallback field(s))",
             len(document_review.fallback_fields),
         )
         return ctx.model_copy(

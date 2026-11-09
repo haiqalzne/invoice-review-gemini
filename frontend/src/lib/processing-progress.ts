@@ -5,7 +5,7 @@ export const PROCESSING_STEPS = [
   },
   {
     title: 'Extract and cross-check',
-    description: 'Running Document Intelligence, then filling gaps from the independent LLM review.',
+    description: 'Reading the document, then comparing a second reading and filling missing fields.',
   },
   {
     title: 'Validate Northstar policy',
